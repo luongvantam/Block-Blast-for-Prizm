@@ -25,5 +25,5 @@ A simple puzzle game inspired by the original Block Blast, made for Casio Prizm 
 
 ## Created by
 
-**Luong Van Tam**  
+**luongvantam**  
 [GitHub Profile](https://github.com/luongvantam)
