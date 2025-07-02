@@ -2,8 +2,8 @@ from kandinsky import fill_rect, draw_string
 from gint import *
 from random import randint
 
-L_FENETRE = 396 
-H_FENETRE = 224 
+L_FENETRE = 300
+H_FENETRE = 224
 
 LNUMH_POLICE = {"small": (8, 10), "medium": (12, 17), "large": (18, 23)}
 POLICE = "small"
@@ -48,15 +48,16 @@ def draw_prect(x, y, w, h, c):
     fill_rect(x, y, w, h, c)
 
 def draw_grid_cell(row, col):
-    color = COULEUR_BLOCK if grid[row][col] == 1 else COULEUR_FOND
-    draw_prect(GRID_X + col * CELL_SIZE + 1, GRID_Y + row * CELL_SIZE + 1, 
-               CELL_SIZE - 2, CELL_SIZE - 2, color)
+    if 0 <= row < GRID_SIZE and 0 <= col < GRID_SIZE:
+        color = COULEUR_BLOCK if grid[row][col] == 1 else COULEUR_FOND
+        draw_prect(GRID_X + col * CELL_SIZE + 1, GRID_Y + row * CELL_SIZE + 1,
+                   CELL_SIZE - 2, CELL_SIZE - 2, color)
 
 def draw_initial_grid():
     for i in range(GRID_SIZE):
         for j in range(GRID_SIZE):
-            draw_prect(GRID_X + j * CELL_SIZE, GRID_Y + i * CELL_SIZE, 
-                      CELL_SIZE, CELL_SIZE, COULEUR_BORD)
+            draw_prect(GRID_X + j * CELL_SIZE, GRID_Y + i * CELL_SIZE,
+                       CELL_SIZE, CELL_SIZE, COULEUR_BORD)
             draw_grid_cell(i, j)
 
 def draw_preview_block(block, row, col, color):
@@ -66,7 +67,7 @@ def draw_preview_block(block, row, col, color):
                 grid_pos_x = col + j
                 grid_pos_y = row + i
                 if 0 <= grid_pos_y < GRID_SIZE and 0 <= grid_pos_x < GRID_SIZE and grid[grid_pos_y][grid_pos_x] == 0:
-                    draw_prect(GRID_X + grid_pos_x * CELL_SIZE + 1, GRID_Y + grid_pos_y * CELL_SIZE + 1, 
+                    draw_prect(GRID_X + grid_pos_x * CELL_SIZE + 1, GRID_Y + grid_pos_y * CELL_SIZE + 1,
                                CELL_SIZE - 2, CELL_SIZE - 2, color)
 
 def clear_preview_block(block, row, col):
@@ -85,14 +86,14 @@ def draw_block(block, x, y):
     for i in range(3):
         for j in range(3):
             if block[i][j]:
-                draw_prect(x + j * CELL_SIZE + 1, y + i * CELL_SIZE + 1, 
-                          CELL_SIZE - 2, CELL_SIZE - 2, COULEUR_BLOCK)
+                draw_prect(x + j * CELL_SIZE + 1, y + i * CELL_SIZE + 1,
+                           CELL_SIZE - 2, CELL_SIZE - 2, COULEUR_BLOCK)
 
 def draw_score():
     global current_score_display
     if score != current_score_display:
         score_str = "Score: " + str(score)
-        l_score = LNUM_POLICE * len(score_str) 
+        l_score = LNUM_POLICE * len(score_str)
         x_score = BLOCK_AREA_X
         y_score = 10
         draw_prect(x_score, y_score, l_score, H_POLICE, COULEUR_SOL)
@@ -101,9 +102,13 @@ def draw_score():
 
 def draw_game_over():
     if game_over:
-        fill_rect(0, 0, L_FENETRE, H_FENETRE, COULEUR_FOND) 
-        draw_string("Game Over! [MENU] to reset", GRID_X + 20, GRID_Y + GRID_SIZE * CELL_SIZE // 2, 
-                   COULEUR_BORD, COULEUR_FOND)
+        fill_rect(0, 0, L_FENETRE, H_FENETRE, COULEUR_FOND)
+        game_over_text = "Game Over! [MENU] to reset"
+        text_width = LNUM_POLICE * len(game_over_text)
+        text_x = (L_FENETRE - text_width) // 2
+        text_y = (H_FENETRE - H_POLICE) // 2
+        draw_string(game_over_text, text_x, text_y,
+                    COULEUR_BORD, COULEUR_FOND)
 
 def generate_block():
     global current_shape_idx, current_block
@@ -111,7 +116,10 @@ def generate_block():
     current_shape_idx = randint(0, len(SHAPES) - 1)
     for i in range(3):
         for j in range(3):
-            current_block[i][j] = SHAPES[current_shape_idx][i][j]
+            if i < len(SHAPES[current_shape_idx]) and j < len(SHAPES[current_shape_idx][i]):
+                current_block[i][j] = SHAPES[current_shape_idx][i][j]
+            else:
+                current_block[i][j] = 0
     draw_block(current_block, BLOCK_AREA_X, BLOCK_AREA_Y)
 
 def can_place_block(block, row, col):
@@ -120,8 +128,8 @@ def can_place_block(block, row, col):
             if block[i][j]:
                 grid_pos_x = col + j
                 grid_pos_y = row + i
-                if (grid_pos_y >= GRID_SIZE or grid_pos_x >= GRID_SIZE or 
-                    grid_pos_y < 0 or grid_pos_x < 0 or grid[grid_pos_y][grid_pos_x]):
+                if not (0 <= grid_pos_y < GRID_SIZE and 0 <= grid_pos_x < GRID_SIZE) or \
+                   grid[grid_pos_y][grid_pos_x]:
                     return False
     return True
 
@@ -130,14 +138,15 @@ def place_block(block, row, col):
     for i in range(3):
         for j in range(3):
             if block[i][j]:
-                grid[row + i][col + j] = 1
-                draw_grid_cell(row + i, col + j)
+                if 0 <= row + i < GRID_SIZE and 0 <= col + j < GRID_SIZE:
+                    grid[row + i][col + j] = 1
+                    draw_grid_cell(row + i, col + j)
 
 def clear_lines():
     global score
     rows_cleared = 0
     cols_cleared = 0
-    
+
     for i in range(GRID_SIZE):
         row_full = True
         for j in range(GRID_SIZE):
@@ -149,7 +158,7 @@ def clear_lines():
                 grid[i][j] = 0
                 draw_grid_cell(i, j)
             rows_cleared += 1
-    
+
     for j in range(GRID_SIZE):
         col_full = True
         for i in range(GRID_SIZE):
@@ -161,7 +170,7 @@ def clear_lines():
                 grid[i][j] = 0
                 draw_grid_cell(i, j)
             cols_cleared += 1
-    
+
     if rows_cleared > 0 or cols_cleared > 0:
         score += 10 * (rows_cleared + cols_cleared)
         draw_score()
@@ -195,20 +204,20 @@ def action(key):
         return
     if game_over:
         return
-    
+
     prev_cursor_x, prev_cursor_y = cursor_x, cursor_y
-    
+
     moved = False
-    if key == KEY_LEFT and cursor_x > 0: 
+    if key == KEY_LEFT and cursor_x > 0:
         cursor_x -= 1
         moved = True
-    elif key == KEY_RIGHT and cursor_x < GRID_SIZE - 1: 
+    elif key == KEY_RIGHT and cursor_x < GRID_SIZE - 1:
         cursor_x += 1
         moved = True
-    elif key == KEY_UP and cursor_y > 0: 
+    elif key == KEY_UP and cursor_y > 0:
         cursor_y -= 1
         moved = True
-    elif key == KEY_DOWN and cursor_y < GRID_SIZE - 1: 
+    elif key == KEY_DOWN and cursor_y < GRID_SIZE - 1:
         cursor_y += 1
         moved = True
     elif key == KEY_EXE or key == KEY_SHIFT:
@@ -219,12 +228,14 @@ def action(key):
             generate_block()
             if not can_place_any_block():
                 game_over = True
-            draw_game_over()
-            draw_preview_block(current_block, cursor_y, cursor_x, COULEUR_PREVIEW)
-        
+        else:
+            pass
+
     if moved:
         clear_preview_block(current_block, prev_cursor_y, prev_cursor_x)
         draw_preview_block(current_block, cursor_y, cursor_x, COULEUR_PREVIEW)
+    draw_game_over()
+
 
 fill_rect(0, 0, L_FENETRE, H_FENETRE, COULEUR_FOND)
 draw_initial_grid()
