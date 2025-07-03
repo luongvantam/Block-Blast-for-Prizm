@@ -521,7 +521,7 @@ def action(key):
     elif (key == KEY_EXE or key == KEY_SHIFT) and active_block_shape is not None:
         if can_place_block(active_block_shape, cursor_y, cursor_x):
             cells_placed = place_block(active_block_shape, cursor_y, cursor_x)
-            score += cells_placed
+            score += cells_placed  # Cộng điểm bằng số ô đã đặt
             draw_score()
             clear_lines()
 
