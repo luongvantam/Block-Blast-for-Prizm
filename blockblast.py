@@ -195,7 +195,7 @@ def draw_block(block, x, y, color, cell_size_override=None):
 
 def draw_score():
     score_str_val = str(score)
-    full_score_text = "score: " + score_str_val
+    full_score_text = score_str_val
 
     fill_rect(BLOCK_AREA_X, SCORE_DISPLAY_Y, L_FENETRE - BLOCK_AREA_X, H_POLICE + 10, COULEUR_FOND)
 
@@ -505,11 +505,11 @@ def action(key):
         cursor_y += 1
         moved_cursor = True
 
-    if key in [KEY_F1, KEY_F2, KEY_F3]:
+    if key in [KEY_F1, KEY_F2, KEY_F3, KEY_1, KEY_2, KEY_3]:
         chosen_idx = -1
-        if key == KEY_F1: chosen_idx = 0
-        elif key == KEY_F2: chosen_idx = 1
-        elif key == KEY_F3: chosen_idx = 2
+        if key == KEY_F1 or key == KEY_1: chosen_idx = 0
+        elif key == KEY_F2 or key == KEY_2: chosen_idx = 1
+        elif key == KEY_F3 or key == KEY_3: chosen_idx = 2
 
         if 0 <= chosen_idx < len(available_blocks) and available_blocks[chosen_idx] is not None:
             active_block_shape = available_blocks[chosen_idx]['shape']
@@ -521,7 +521,7 @@ def action(key):
     elif (key == KEY_EXE or key == KEY_SHIFT) and active_block_shape is not None:
         if can_place_block(active_block_shape, cursor_y, cursor_x):
             cells_placed = place_block(active_block_shape, cursor_y, cursor_x)
-            score += cells_placed  # Cộng điểm bằng số ô đã đặt
+            score += cells_placed
             draw_score()
             clear_lines()
 
@@ -569,5 +569,5 @@ draw_score()
 
 while True:
     e = pollevent()
-    if e.type == KEYEV_DOWN and e.key in [KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_EXE, KEY_MENU, KEY_SHIFT, KEY_F1, KEY_F2, KEY_F3, KEY_F6]:
+    if e.type == KEYEV_DOWN and e.key in [KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_EXE, KEY_MENU, KEY_SHIFT, KEY_F1, KEY_F2, KEY_F3, KEY_F6, KEY_1, KEY_2, KEY_3]:
         action(e.key)
