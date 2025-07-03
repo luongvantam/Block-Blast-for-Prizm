@@ -1,6 +1,6 @@
 from kandinsky import fill_rect, draw_string
 from gint import *
-from random import randint
+from random import randint, choice
 
 L_FENETRE = 320
 H_FENETRE = 224
@@ -36,6 +36,15 @@ COULEUR_SOL = (180, 232, 232)
 COULEUR_CLEAR_HIGHLIGHT = (200, 255, 200)
 COULEUR_CLEAR_PREVIEW = (255, 255, 100)
 COULEUR_POTENTIAL_CLEAR = (100, 200, 255)
+
+PREDEFINED_COLORS = [
+    (255, 0, 0),
+    (0, 255, 0),
+    (0, 0, 255),
+    (255, 165, 0),
+    (128, 0, 128),
+    (255, 255, 0)
+]
 
 SHAPES = [
     [[1, 1, 1],
@@ -141,12 +150,9 @@ highlighted_rows = []
 highlighted_cols = []
 
 def generate_random_color():
-    r = randint(80, 255)
-    g = randint(80, 255)
-    b = randint(80, 255)
-    return (r, g, b)
+    return choice(PREDEFINED_COLORS)
 
-def get_lightened_color(rgb_tuple, amount=50):
+def get_lightened_color(rgb_tuple, amount=100):
     r, g, b = rgb_tuple
     new_r = min(255, r + amount)
     new_g = min(255, g + amount)
@@ -190,16 +196,16 @@ def draw_block(block, x, y, color, cell_size_override=None):
 def draw_score():
     score_str_val = str(score)
     full_score_text = "score: " + score_str_val
-    
+
     fill_rect(BLOCK_AREA_X, SCORE_DISPLAY_Y, L_FENETRE - BLOCK_AREA_X, H_POLICE + 10, COULEUR_FOND)
-    
+
     draw_string(full_score_text, BLOCK_AREA_X, SCORE_DISPLAY_Y, COULEUR_BORD, COULEUR_FOND)
 
 def draw_game_over():
     global score
     if game_over:
         fill_rect(0, 0, L_FENETRE, H_FENETRE, COULEUR_FOND)
-        
+
         game_over_text = "Game Over!"
         reset_text = "[MENU] to reset"
         score_text = "Score: " + str(score)
@@ -207,9 +213,9 @@ def draw_game_over():
         line_spacing = H_POLICE + 5
 
         total_text_height = 3 * H_POLICE + 2 * 5
-        
+
         initial_y = (H_FENETRE - total_text_height) // 2
-        
+
         text_width_go = LNUM_POLICE * len(game_over_text)
         text_x_go = (L_FENETRE - text_width_go) // 2
         draw_string(game_over_text, text_x_go, initial_y, COULEUR_BORD, COULEUR_FOND)
@@ -229,7 +235,7 @@ def draw_available_blocks():
 
     for i, block_data in enumerate(available_blocks):
         label_y = current_y_pos
-        
+
         draw_string(f"F{i+1}:", BLOCK_AREA_X, label_y, COULEUR_BORD, COULEUR_FOND)
 
         block_width = 3 * PREVIEW_CELL_SIZE + 2
@@ -255,13 +261,13 @@ def draw_menu():
     global menu_selection_index
     if menu_open:
         fill_rect(MENU_X, MENU_Y, MENU_WIDTH, MENU_HEIGHT, MENU_BG_COLOR)
-        
+
         options = ["Replay", "Resume", "Exit"]
         line_height = H_POLICE + 5
-        
+
         for i, option_text in enumerate(options):
             current_y = MENU_Y + 10 + i * line_height
-            
+
             if i == menu_selection_index:
                 fill_rect(MENU_X + 5, current_y - 2, MENU_WIDTH - 10, H_POLICE + 4, MENU_TEXT_COLOR)
                 draw_string(option_text, MENU_X + 10, current_y, MENU_BG_COLOR, MENU_TEXT_COLOR)
@@ -282,7 +288,7 @@ def generate_three_blocks():
                     shape[r][c] = 0
         color = generate_random_color()
         available_blocks.append({"shape": shape, "color": color})
-    
+
     active_block_shape = None
     active_block_color = None
     selected_block_idx = -1
@@ -303,12 +309,15 @@ def can_place_block(block, row, col):
 
 def place_block(block, row, col):
     global grid
+    num_cells_placed = 0
     for i in range(3):
         for j in range(3):
             if block[i][j]:
                 if 0 <= row + i < GRID_SIZE and 0 <= col + j < GRID_SIZE:
                     grid[row + i][col + j] = active_block_color
                     draw_grid_cell(row + i, col + j)
+                    num_cells_placed += 1
+    return num_cells_placed
 
 def would_clear_lines(block, target_row, target_col):
     temp_grid = [row[:] for row in grid]
@@ -374,7 +383,7 @@ def clear_lines():
         for c in cols_to_clear:
             for r in range(GRID_SIZE):
                 draw_grid_cell(r, c, COULEUR_CLEAR_HIGHLIGHT)
-        
+
         for _ in range(20000):
             pass
 
@@ -402,7 +411,7 @@ def can_place_any_block_from_available():
 
 def reset_game():
     global grid, score, cursor_x, cursor_y, game_over, prev_cursor_x, prev_cursor_y, highlighted_rows, highlighted_cols, active_block_shape, active_block_color, selected_block_idx, menu_open, menu_selection_index
-    
+
     fill_rect(0, 0, L_FENETRE, H_FENETRE, COULEUR_FOND)
     for i in range(GRID_SIZE):
         for j in range(GRID_SIZE):
@@ -428,7 +437,7 @@ def reset_game():
 
 def action(key):
     global cursor_x, cursor_y, game_over, prev_cursor_x, prev_cursor_y, score, highlighted_rows, highlighted_cols, active_block_shape, active_block_color, selected_block_idx, menu_open, menu_selection_index
-    
+
     if game_over and key == KEY_MENU:
         reset_game()
         return
@@ -495,7 +504,7 @@ def action(key):
     elif key == KEY_DOWN and cursor_y < GRID_SIZE - 1:
         cursor_y += 1
         moved_cursor = True
-    
+
     if key in [KEY_F1, KEY_F2, KEY_F3]:
         chosen_idx = -1
         if key == KEY_F1: chosen_idx = 0
@@ -511,8 +520,8 @@ def action(key):
 
     elif (key == KEY_EXE or key == KEY_SHIFT) and active_block_shape is not None:
         if can_place_block(active_block_shape, cursor_y, cursor_x):
-            place_block(active_block_shape, cursor_y, cursor_x)
-            score += 2
+            cells_placed = place_block(active_block_shape, cursor_y, cursor_x)
+            score += cells_placed
             draw_score()
             clear_lines()
 
@@ -534,7 +543,6 @@ def action(key):
         if can_place_block(active_block_shape, cursor_y, cursor_x):
             r_to_h, c_to_h = would_clear_lines(active_block_shape, cursor_y, cursor_x)
             if r_to_h or c_to_h:
-                current_preview_color = COULEUR_CLEAR_PREVIEW
                 highlighted_rows = r_to_h
                 highlighted_cols = c_to_h
                 for r in highlighted_rows:
@@ -545,7 +553,7 @@ def action(key):
                         draw_grid_cell(r, c, COULEUR_POTENTIAL_CLEAR)
 
         draw_current_block_preview(active_block_shape, cursor_y, cursor_x, current_preview_color)
-    
+
     if not can_place_any_block_from_available():
         game_over = True
         draw_game_over()
